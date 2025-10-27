@@ -50,7 +50,8 @@
     <div class="title">达尔文拳套定制方案</div>
     
     <div class="result-item">
-      <div class="item-label">拳套尺寸</div>
+      <div class="item-label">拳        拳套尺寸
+      </div>
       <div class="item-value" id="sizeVal">--</div>
     </div>
     <div class="result-item">
@@ -73,7 +74,8 @@
     </div>
     
     <!-- 印字定制详情 -->
-    <div class="section-title">手腕内侧印字详情</div>
+    <div class="section-title">手腕      手腕内侧印字详情
+    </div>
     <div class="custom-section" id="printDetail">
       <!-- 印字详情将通过JS动态生成 -->
     </div>
@@ -89,7 +91,8 @@
       <div class="item-value" id="logoReplaceVal">未选择</div>
     </div>
     <div class="result-item">
-      <div class="item-label">手背刺绣</div>
+      <div class="item-label">手背        手背刺绣
+      </div>
       <div class="item-value" id="embroideryVal">未选择</div>
     </div>
     <div class="result-item">
@@ -183,17 +186,31 @@
       document.getElementById('customVal').innerText = '¥' + customExtra;
 
       // 3. 填充Logo相关信息
-      const logoColorText = customOptions.logoColor === 'logoContrast' ? '撞色（与手背颜色一致）' : '原色植鞣牛皮（默认）';
-      const logoStitchText = customOptions.logoStitch === 'stitchInner' ? '内缝（缝在剪裁后的手腕牛皮之下）' : '外缝（直接缝在手腕牛皮上）';
+      const logoColorMap = {
+        'logoDefault': '原色植鞣牛皮logo',
+        'logoContrast': '撞色logo（与手背颜色一致）',
+        'logoTextGold': '烫金文字LOGO',
+        'logoTextSilver': '烫银文字LOGO'
+      };
+      const logoColorText = logoColorMap[customOptions.logoColor] || '原色植鞣牛皮（默认）';
+      
+      const logoStitchMap = {
+        'stitchOuter': '外缝（直接缝在手腕牛皮上）',
+        'stitchInner': '内缝（缝在剪裁后的手腕牛皮之下）',
+        'stitchPrintOnly': '烫印（无缝纫）'
+      };
+      const logoStitchText = logoStitchMap[customOptions.logoStitch] || '外缝（直接缝在手腕牛皮上）';
+      
       document.getElementById('logoColorVal').innerText = logoColorText;
       document.getElementById('logoStitchVal').innerText = logoStitchText;
 
       // 4. 填充Logo替换和刺绣信息
-      document.getElementById('logoReplaceVal').innerText = customOptions.logoReplace ? '已选择（+70元）' : '未选择';
-      document.getElementById('embroideryVal').innerText = customOptions.embroidery ? '已选择（100-300元，待报价）' : '未选择';
+      document.getElementById('logoReplaceVal').innerText = customOptions.logoReplace === 'yes' ? '已选择（+70元）' : '未选择';
+      document.getElementById('embroideryVal').innerText = customOptions.embroidery === 'yes' ? '已选择（100-300元，待报价）' : '未选择';
 
       // 5. 填充颜色选择信息
       const colorGrid = document.getElementById('colorGrid');
+      colorGrid.innerHTML = ''; // 清空容器
       for (let i = 1; i <= 8; i++) {
         const colorCode = areaColors[i];
         const colorItem = document.createElement('div');
@@ -220,15 +237,14 @@
 
       // 6. 填充印字详情
       const printDetail = document.getElementById('printDetail');
+      printDetail.innerHTML = '';
       let printHtml = '';
       
       // 左手印字
       if (customOptions.leftEngText || customOptions.leftChText) {
         const content = customOptions.leftEngText || customOptions.leftChText;
         const type = customOptions.leftEngText ? '英文/数字' : '汉字（+30元）';
-        const font = customOptions.leftEngText 
-          ? (document.getElementById('leftEngCursive') ? '花体' : '正字体')
-          : (document.getElementById('leftChSong') ? '宋体' : '手写体');
+        const font = customOptions.leftEngFont === 'cursive' ? '花体' : '正字体';
         const color = getColorText(customOptions.leftPrintColor || 'leftGold');
         
         printHtml += `<div class="custom-detail"><strong>左手：</strong>${type} "${content}"，字体：${font}，颜色：${color}</div>`;
@@ -240,9 +256,7 @@
       if (customOptions.rightEngText || customOptions.rightChText) {
         const content = customOptions.rightEngText || customOptions.rightChText;
         const type = customOptions.rightEngText ? '英文/数字' : '汉字（+30元）';
-        const font = customOptions.rightEngText
-          ? (document.getElementById('rightEngCursive') ? '花体' : '正字体')
-          : (document.getElementById('rightChSong') ? '宋体' : '手写体');
+        const font = customOptions.rightEngFont === 'cursive' ? '花体' : '正字体';
         const color = getColorText(customOptions.rightPrintColor || 'rightGold');
         
         printHtml += `<div class="custom-detail"><strong>右手：</strong>${type} "${content}"，字体：${font}，颜色：${color}</div>`;
@@ -254,10 +268,11 @@
 
       // 7. 填充图案详情
       const patternDetail = document.getElementById('patternDetail');
+      patternDetail.innerHTML = '';
       let patternHtml = '';
       
       // 左手图案
-      if (customOptions.leftWristPattern) {
+      if (customOptions.leftWristPattern === 'yes') {
         const color = getPatternColorText(customOptions.leftPatternColor || 'leftPatternGold');
         patternHtml += `<div class="custom-detail"><strong>左手：</strong>已定制（+30元），颜色：${color}</div>`;
       } else {
@@ -265,7 +280,7 @@
       }
       
       // 右手图案
-      if (customOptions.rightWristPattern) {
+      if (customOptions.rightWristPattern === 'yes') {
         const color = getPatternColorText(customOptions.rightPatternColor || 'rightPatternGold');
         patternHtml += `<div class="custom-detail"><strong>右手：</strong>已定制（+30元），颜色：${color}</div>`;
       } else {
