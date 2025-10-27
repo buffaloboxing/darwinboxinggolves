@@ -9,7 +9,7 @@
     .canvas-container {
       position: relative;
       width: 100%;
-      height: auto;
+      height: 400px; /* 固定高度避免闪烁 */
       border: 1px solid #ddd;
       border-radius: 6px;
       background-color: #f9f9f9;
@@ -31,7 +31,7 @@
     canvas {
       position: relative;
       width: 100%;
-      height: auto;
+      height: 100%;
       z-index: 2;
     }
     .color-container { 
@@ -176,6 +176,7 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     
+    // 从localStorage获取基础价格
     let basePrice = parseInt(localStorage.getItem('basePrice')) || 1699;
     let colorExtra = 0;
     const areaColors = {
@@ -183,7 +184,6 @@
       '5': null, '6': null, '7': null, '8': null
     };
     let bgImg = null; // 存储底图对象
-    let originalWidth, originalHeight; // 原始图片尺寸
 
     // 颜色列表
     const colors = [
@@ -245,164 +245,86 @@
 
     // 与原始底图匹配的各区域路径坐标
     const areaPaths = {
-      // ①号区域：左右拳套顶部绿色（精准匹配原图绿色区域）
       '1': {
         left: [
-          {x: 160, y: 90},          // 左上角起点
-          {x: 220, y: 60},          // 顶部圆弧控制点（二次贝塞尔）
-          {x: 280, y: 90},          // 右上角终点
-          {x: 290, y: 220},         // 右侧直线终点
-          {x: 140, y: 230},         // 左侧直线终点
-          {x: 160, y: 90}           // 闭合点
+          {x: 160, y: 90}, {x: 220, y: 60}, {x: 280, y: 90},
+          {x: 290, y: 220}, {x: 140, y: 230}, {x: 160, y: 90}
         ],
         right: [
-          {x: 340, y: 90},          // 左上角起点
-          {x: 400, y: 60},          // 顶部圆弧控制点（二次贝塞尔）
-          {x: 460, y: 90},          // 右上角终点
-          {x: 470, y: 220},         // 右侧直线终点
-          {x: 330, y: 230},         // 左侧直线终点
-          {x: 340, y: 90}           // 闭合点
+          {x: 340, y: 90}, {x: 400, y: 60}, {x: 460, y: 90},
+          {x: 470, y: 220}, {x: 330, y: 230}, {x: 340, y: 90}
         ]
       },
-
-      // ②号区域：左右拳套下部红色（精准匹配原图红色区域）
       '2': {
         left: [
-          {x: 160, y: 230},         // 上边缘左起点
-          {x: 150, y: 320},         // 左侧圆角控制点（二次贝塞尔）
-          {x: 170, y: 330},         // 左下角终点
-          {x: 260, y: 330},         // 右下角终点
-          {x: 280, y: 320},         // 右侧圆角控制点（二次贝塞尔）
-          {x: 270, y: 220},         // 上边缘右起点
-          {x: 160, y: 230}          // 闭合点
+          {x: 160, y: 230}, {x: 150, y: 320}, {x: 170, y: 330},
+          {x: 260, y: 330}, {x: 280, y: 320}, {x: 270, y: 220}, {x: 160, y: 230}
         ],
         right: [
-          {x: 360, y: 230},         // 上边缘左起点
-          {x: 370, y: 320},         // 左侧圆角控制点（二次贝塞尔）
-          {x: 390, y: 330},         // 左下角终点
-          {x: 480, y: 330},         // 右下角终点
-          {x: 500, y: 320},         // 右侧圆角控制点（二次贝塞尔）
-          {x: 490, y: 220},         // 上边缘右起点
-          {x: 360, y: 230}          // 闭合点
+          {x: 360, y: 230}, {x: 370, y: 320}, {x: 390, y: 330},
+          {x: 480, y: 330}, {x: 500, y: 320}, {x: 490, y: 220}, {x: 360, y: 230}
         ]
       },
-
-      // ③号区域：左右拳套主体蓝色（精准匹配原图蓝色区域）
       '3': {
         left: [
-          {x: 150, y: 130},         // 上起点
-          {x: 120, y: 180},         // 左侧弧线控制点1（三次贝塞尔）
-          {x: 110, y: 250},         // 左侧弧线控制点2（三次贝塞尔）
-          {x: 130, y: 290},         // 下起点
-          {x: 250, y: 280},         // 右侧直线终点
-          {x: 260, y: 180},         // 上部右侧弧线控制点
-          {x: 150, y: 130}          // 闭合点
+          {x: 150, y: 130}, {x: 120, y: 180}, {x: 110, y: 250},
+          {x: 130, y: 290}, {x: 250, y: 280}, {x: 260, y: 180}, {x: 150, y: 130}
         ],
         right: [
-          {x: 340, y: 130},         // 上起点
-          {x: 370, y: 180},         // 右侧弧线控制点1（三次贝塞尔）
-          {x: 380, y: 250},         // 右侧弧线控制点2（三次贝塞尔）
-          {x: 360, y: 290},         // 下起点
-          {x: 240, y: 280},         // 左侧直线终点
-          {x: 230, y: 180},         // 上部左侧弧线控制点
-          {x: 340, y: 130}          // 闭合点
+          {x: 340, y: 130}, {x: 370, y: 180}, {x: 380, y: 250},
+          {x: 360, y: 290}, {x: 240, y: 280}, {x: 230, y: 180}, {x: 340, y: 130}
         ]
       },
-
-      // ④号区域：左右上部侧边粉色（精准匹配原图粉色区域）
       '4': {
         left: [
-          {x: 290, y: 90},          // 上起点（衔接①号区域）
-          {x: 310, y: 110},         // 外侧圆弧控制点（二次贝塞尔）
-          {x: 305, y: 150},         // 外侧终点
-          {x: 285, y: 140},         // 内侧直线终点
-          {x: 290, y: 90}           // 闭合点
+          {x: 290, y: 90}, {x: 310, y: 110}, {x: 305, y: 150},
+          {x: 285, y: 140}, {x: 290, y: 90}
         ],
         right: [
-          {x: 470, y: 90},          // 上起点（衔接①号区域）
-          {x: 490, y: 110},         // 外侧圆弧控制点（二次贝塞尔）
-          {x: 485, y: 150},         // 外侧终点
-          {x: 465, y: 140},         // 内侧直线终点
-          {x: 470, y: 90}           // 闭合点
+          {x: 470, y: 90}, {x: 490, y: 110}, {x: 485, y: 150},
+          {x: 465, y: 140}, {x: 470, y: 90}
         ]
       },
-
-      // ⑤号区域：左右中部侧边灰色（精准匹配原图灰色区域）
       '5': {
         left: [
-          {x: 285, y: 150},         // 上起点（衔接④号区域）
-          {x: 305, y: 160},         // 外侧弧线控制点
-          {x: 300, y: 210},         // 外侧终点
-          {x: 275, y: 200},         // 内侧直线终点
-          {x: 285, y: 150}          // 闭合点
+          {x: 285, y: 150}, {x: 305, y: 160}, {x: 300, y: 210},
+          {x: 275, y: 200}, {x: 285, y: 150}
         ],
         right: [
-          {x: 465, y: 150},         // 上起点（衔接④号区域）
-          {x: 485, y: 160},         // 外侧弧线控制点
-          {x: 480, y: 210},         // 外侧终点
-          {x: 455, y: 200},         // 内侧直线终点
-          {x: 465, y: 150}          // 闭合点
+          {x: 465, y: 150}, {x: 485, y: 160}, {x: 480, y: 210},
+          {x: 455, y: 200}, {x: 465, y: 150}
         ]
       },
-
-      // ⑥号区域：左右中部内侧黑色（精准匹配原图黑色区域）
       '6': {
         left: [
-          {x: 275, y: 200},         // 上起点（衔接⑤号区域）
-          {x: 290, y: 195},         // 内侧弧线控制点（二次贝塞尔）
-          {x: 285, y: 240},         // 内侧终点
-          {x: 260, y: 250},         // 下直线终点
-          {x: 275, y: 200}          // 闭合点
+          {x: 275, y: 200}, {x: 290, y: 195}, {x: 285, y: 240},
+          {x: 260, y: 250}, {x: 275, y: 200}
         ],
         right: [
-          {x: 455, y: 200},         // 上起点（衔接⑤号区域）
-          {x: 440, y: 195},         // 内侧弧线控制点（二次贝塞尔）
-          {x: 445, y: 240},         // 内侧终点
-          {x: 470, y: 250},         // 下直线终点
-          {x: 455, y: 200}          // 闭合点
+          {x: 455, y: 200}, {x: 440, y: 195}, {x: 445, y: 240},
+          {x: 470, y: 250}, {x: 455, y: 200}
         ]
       },
-
-      // ⑦号区域：左右下部内侧紫色（精准匹配原图紫色区域）
       '7': {
         left: [
-          {x: 260, y: 250},         // 上起点（衔接⑥号区域）
-          {x: 270, y: 270},         // 外侧弧线控制点
-          {x: 265, y: 300},         // 外侧终点
-          {x: 230, y: 310},         // 内侧直线终点
-          {x: 260, y: 250}          // 闭合点
+          {x: 260, y: 250}, {x: 270, y: 270}, {x: 265, y: 300},
+          {x: 230, y: 310}, {x: 260, y: 250}
         ],
         right: [
-          {x: 470, y: 250},         // 上起点（衔接⑥号区域）
-          {x: 460, y: 270},         // 外侧弧线控制点
-          {x: 465, y: 300},         // 外侧终点
-          {x: 500, y: 310},         // 内侧直线终点
-          {x: 470, y: 250}          // 闭合点
+          {x: 470, y: 250}, {x: 460, y: 270}, {x: 465, y: 300},
+          {x: 500, y: 310}, {x: 470, y: 250}
         ]
       },
-
-      // ⑧号区域：左右系带及底部黄色（精准匹配原图黄色区域）
       '8': {
         left: [
-          {x: 180, y: 330},         // 左系带起点
-          {x: 200, y: 325},         // 系带弧线控制点（二次贝塞尔）
-          {x: 220, y: 330},         // 左系带终点
-          {x: 215, y: 340},         // 底部圆角控制点
-          {x: 185, y: 340},         // 底部左侧终点
-          {x: 180, y: 330}          // 闭合点
+          {x: 180, y: 330}, {x: 200, y: 325}, {x: 220, y: 330},
+          {x: 215, y: 340}, {x: 185, y: 340}, {x: 180, y: 330}
         ],
         right: [
-          {x: 380, y: 200},         // 上系带起点
-          {x: 400, y: 200},         // 上系带终点
-          {x: 405, y: 250},         // 中系带右侧点
-          {x: 400, y: 300},         // 下系带右侧点
-          {x: 405, y: 320},         // 底部圆角控制点（二次贝塞尔）
-          {x: 395, y: 330},         // 底部右侧终点
-          {x: 365, y: 330},         // 底部左侧终点
-          {x: 360, y: 320},         // 左侧圆角控制点
-          {x: 365, y: 300},         // 下系带左侧点
-          {x: 360, y: 250},         // 中系带左侧点
-          {x: 380, y: 200}          // 闭合点
+          {x: 380, y: 200}, {x: 400, y: 200}, {x: 405, y: 250},
+          {x: 400, y: 300}, {x: 405, y: 320}, {x: 395, y: 330},
+          {x: 365, y: 330}, {x: 360, y: 320}, {x: 365, y: 300},
+          {x: 360, y: 250}, {x: 380, y: 200}
         ]
       }
     };
@@ -415,7 +337,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
       
-      // 再绘制每个区域的颜色（左右两侧分别处理）
+      // 再绘制每个区域的颜色
       Object.keys(areaColors).forEach(area => {
         const color = areaColors[area];
         if (color) {
@@ -424,46 +346,42 @@
       });
     }
 
-    // 绘制单个区域颜色（区分左右，处理弧线）
+    // 绘制单个区域颜色
     function drawAreaColor(area, color) {
       const paths = areaPaths[area];
       if (!paths) return;
 
-      // 绘制左侧区域（若存在）
+      // 绘制左侧区域
       if (paths.left) {
         drawPathWithCurve(paths.left, color);
       }
 
-      // 绘制右侧区域（若存在）
+      // 绘制右侧区域
       if (paths.right) {
         drawPathWithCurve(paths.right, color);
       }
     }
 
-    // 处理含弧线的路径绘制（支持二次贝塞尔曲线）
+    // 处理含弧线的路径绘制
     function drawPathWithCurve(points, color) {
       ctx.beginPath();
       ctx.moveTo(points[0].x, points[0].y);
 
       for (let i = 1; i < points.length; i++) {
-        // 判断是否为圆弧段（控制点+终点成对出现）
+        // 二次贝塞尔曲线处理
         if (i % 2 === 1 && i + 1 < points.length) {
-          // 二次贝塞尔曲线：控制点(points[i]) → 终点(points[i+1])
           ctx.quadraticCurveTo(
             points[i].x, points[i].y,
             points[i + 1].x, points[i + 1].y
           );
-          i++; // 跳过终点，避免重复绘制
+          i++;
         } else {
-          // 直线段
           ctx.lineTo(points[i].x, points[i].y);
         }
       }
 
       ctx.closePath();
       ctx.fillStyle = color;
-      ctx.fill();
-      // 添加半透明效果使原图轮廓可见
       ctx.globalAlpha = 0.8;
       ctx.fill();
       ctx.globalAlpha = 1;
@@ -481,6 +399,7 @@
         const color = areaColors[i];
         if (!color) continue;
         
+        // 野牛皮特殊处理
         if (isWildCowhide && color === '#80412D') continue;
         
         if (i <= 3) {
@@ -501,26 +420,24 @@
       let alertText = '';
       
       // 1-3号区域超额提示
-      if (area123Colors.size > (isWildCowhide ? 3 : 2)) {
-        const overCount = area123Colors.size - (isWildCowhide ? 3 : 2);
+      const area123Free = isWildCowhide ? 3 : 2;
+      if (area123Colors.size > area123Free) {
+        const overCount = area123Colors.size - area123Free;
         extra += overCount * 300;
         alertText += `①②③号区域已超额使用${overCount}种颜色，需额外支付${overCount * 300}元；`;
       }
       
       // 4-8号区域超额提示
-      if (newColorsIn45678.size > (isWildCowhide ? 2 : 1)) {
-        const overCount = newColorsIn45678.size - (isWildCowhide ? 2 : 1);
+      const area45678Free = isWildCowhide ? 2 : 1;
+      if (newColorsIn45678.size > area45678Free) {
+        const overCount = newColorsIn45678.size - area45678Free;
         extra += overCount * 150;
         alertText += `④⑤⑥⑦⑧号区域已超额使用${overCount}种颜色，需额外支付${overCount * 150}元；`;
       }
 
       // 显示/隐藏提示
-      if (alertText) {
-        priceAlert.textContent = alertText;
-        priceAlert.style.display = 'block';
-      } else {
-        priceAlert.style.display = 'none';
-      }
+      priceAlert.textContent = alertText;
+      priceAlert.style.display = alertText ? 'block' : 'none';
 
       // 更新价格
       colorExtra = extra;
@@ -544,21 +461,14 @@
       }
     }
 
-    // 加载原始底图并设置canvas尺寸与图片一致
+    // 加载原始底图
     function loadBgImage() {
       bgImg = new Image();
-      // 恢复为原始底图路径
       bgImg.src = '../images/glove-bg.png.png';
       
       bgImg.onload = () => {
-        // 设置canvas尺寸与图片原始尺寸完全一致
-        canvas.width = bgImg.width;
-        canvas.height = bgImg.height;
-        originalWidth = bgImg.width;
-        originalHeight = bgImg.height;
-        
         canvasPlaceholder.style.display = 'none';
-        ctx.drawImage(bgImg, 0, 0);
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
         
         // 恢复之前的颜色选择
         const savedColors = localStorage.getItem('areaColors');
@@ -578,14 +488,14 @@
 
     // 导航按钮事件
     prevBtn.addEventListener('click', () => {
-      window.location.href = 'leather.html'; // 上一页：选择皮革页面
+      window.location.href = 'leather.html';
     });
 
     nextBtn.addEventListener('click', () => {
       // 保存当前颜色选择
       localStorage.setItem('areaColors', JSON.stringify(areaColors));
       localStorage.setItem('colorExtra', colorExtra);
-      window.location.href = 'customize.html'; // 下一页：定制印字/图案页面
+      window.location.href = 'customize.html';
     });
 
     // 初始化
