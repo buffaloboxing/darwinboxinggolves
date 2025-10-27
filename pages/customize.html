@@ -6,15 +6,22 @@
   <style>
     body { font-family: 微软雅黑; padding: 20px; max-width: 750px; margin: 0 auto; }
     .title { font-size: 20px; font-weight: bold; margin: 20px 0; }
-    .section-title { font-size: 16px; font-weight: bold; margin: 25px 0 15px; padding-left: 5px; border-left: 3px solid #07c160; }
-    .option-group { margin: 15px 0; padding: 15px; border: 1px solid #f0f0f0; border-radius: 6px; }
-    .radio-group { display: flex; flex-wrap: wrap; gap: 15px; margin: 10px 0; }
+    .section { margin: 25px 0; padding: 15px; border: 1px solid #f0f0f0; border-radius: 6px; }
+    .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
+    .option-group { margin: 15px 0; }
+    .option-label { font-weight: 500; margin-bottom: 8px; display: block; }
+    .radio-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; }
     .radio-item { display: flex; align-items: center; gap: 5px; }
-    .input-group { margin: 10px 0; }
-    label { cursor: pointer; }
-    input[type="text"] { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-    .hand-section { margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 6px; }
-    .hand-title { font-weight: bold; margin-bottom: 15px; color: #333; font-size: 15px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 5px 0 15px;
+      box-sizing: border-box;
+    }
+    .note { font-size: 14px; color: #999; margin: 5px 0 15px; padding-left: 5px; }
+    .price-tag { color: #e4393c; font-size: 14px; }
     .current-price {
       font-size: 16px;
       font-weight: bold;
@@ -23,12 +30,6 @@
       padding: 10px;
       border: 1px solid #eee;
       border-radius: 6px;
-    }
-    .custom-extra {
-      font-size: 18px;
-      font-weight: bold;
-      color: #e4393c;
-      margin: 15px 0;
     }
     .btn-group {
       display: flex;
@@ -52,394 +53,603 @@
       color: #fff;
       border: none;
     }
-    .note { font-size: 14px; color: #666; margin: 5px 0; padding-left: 5px; }
-    .fee-tag { color: #e4393c; font-weight: bold; }
-    .error提示 {
-      color: #e4393c;
+    .warning {
+      color: #ff4d4f;
       font-size: 14px;
-      margin: 5px 0;
-      padding: 5px;
-      background: #fff1f0;
+      margin: 10px 0;
+      padding: 8px;
+      border: 1px solid #ffccc7;
       border-radius: 4px;
+      background-color: #fff2f0;
       display: none;
+    }
+    .annotation {
+      font-size: 12px;
+      color: #666;
+      margin-left: 5px;
     }
   </style>
 </head>
 <body>
   <div class="title">定制印字与图案</div>
   
-  <!-- 统一价格显示位置 -->
-  <div class="current-price">当前价格：¥<span id="totalPrice">0</span></div>
+  <div class="current-price">当前价格：¥<span id="currentPrice">0</span></div>
 
   <!-- Logo颜色选择 -->
-  <div class="section-title">Logo颜色选择</div>
-  <div class="radio-group">
-    <div class="radio-item">
-      <input type="radio" name="logoColor" id="logoDefault" checked>
-      <label for="logoDefault">原色植鞣牛皮logo（默认，浅肉色，随使用变深）</label>
+  <div class="section">
+    <div class="section-title">一、Logo颜色</div>
+    <div class="radio-group" id="logoColorGroup">
+      <div class="radio-item">
+        <input type="radio" name="logoColor" id="logoDefault" value="logoDefault" checked>
+        <label for="logoDefault">原色植鞣牛皮logo</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="logoColor" id="logoContrast" value="logoContrast">
+        <label for="logoContrast">撞色logo</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="logoColor" id="logoTextGold" value="logoTextGold">
+        <label for="logoTextGold">文字Logo（烫金）
+          <span class="annotation">（稀有皮（野牛皮除外）必选，纯文字无图案，例：Darwin 12 ounce）</span>
+        </label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="logoColor" id="logoTextSilver" value="logoTextSilver">
+        <label for="logoTextSilver">文字Logo（烫银）
+          <span class="annotation">（稀有皮（野牛皮除外）必选，纯文字无图案，例：Darwin 12 ounce）</span>
+        </label>
+      </div>
     </div>
-    <div class="radio-item">
-      <input type="radio" name="logoColor" id="logoContrast">
-      <label for="logoContrast">撞色logo（与手背颜色一致）</label>
-    </div>
+    <div class="warning" id="rareLeatherWarning">稀有皮革只能烫印文字Logo，无法缝纫。</div>
   </div>
 
-  <!-- Logo缝纫选择 -->
-  <div class="section-title">Logo缝纫选择</div>
-  <div class="radio-group">
-    <div class="radio-item">
-      <input type="radio" name="logoStitch" id="stitchOuter" checked>
-      <label for="stitchOuter">外缝（直接缝在手腕牛皮上）</label>
+  <!-- Logo缝纫方式 -->
+  <div class="section">
+    <div class="section-title">二、Logo缝纫方式</div>
+    <div class="radio-group" id="logoStitchGroup">
+      <div class="radio-item">
+        <input type="radio" name="logoStitch" id="stitchOuter" value="stitchOuter" checked>
+        <label for="stitchOuter">外缝（直接缝在手腕牛皮上）</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="logoStitch" id="stitchInner" value="stitchInner">
+        <label for="stitchInner">内缝（缝在剪裁后的手腕牛皮之下）</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="logoStitch" id="stitchPrintOnly" value="stitchPrintOnly">
+        <label for="stitchPrintOnly">烫印（纯文字logo烫印，无缝纫）</label>
+      </div>
     </div>
-    <div class="radio-item">
-      <input type="radio" name="logoStitch" id="stitchInner">
-      <label for="stitchInner">内缝（缝在剪裁后的手腕牛皮之下）</label>
-    </div>
+    <div class="warning" id="textLogoWarning">文字LOGO无缝纫</div>
   </div>
-
-  <!-- 一、印字内容 -->
-  <div class="section-title">一、手腕内侧印字（烫印）</div>
-  <div class="note">左手、右手可分别选择内容、颜色、字体（英文/数字与汉字不可同时使用）</div>
 
   <!-- 左手印字 -->
-  <div class="hand-section">
-    <div class="hand-title">左手</div>
-    
-    <div class="option-group">
-      <div class="input-group">
-        <label>1. 英文/数字：</label>
-        <input type="text" id="leftEngText" placeholder="请输入内容（限25个字符内，含标点 , 。？！）" maxlength="25">
-        <div class="radio-group">
-          <div class="radio-item">
-            <input type="radio" name="leftFont" id="leftEngCursive" checked>
-            <label for="leftEngCursive">花体</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="leftFont" id="leftEngNormal">
-            <label for="leftEngNormal">正字体</label>
-          </div>
-        </div>
+  <div class="section">
+    <div class="section-title">三、左手手腕内侧印字</div>
+    <div class="option-label">英文/数字（免费）</div>
+    <input type="text" id="leftEngText" placeholder="请输入英文、数字或标点（限25字符内，标点仅限,。？！）">
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" name="leftEngFont" id="leftEngNormal" value="normal" checked>
+        <label for="leftEngNormal">正字体</label>
       </div>
-
-      <div class="input-group">
-        <label>2. 汉字：<span class="fee-tag">（+30元定制铜模）</span></label>
-        <input type="text" id="leftChText" placeholder="请输入内容（限15字以内）" maxlength="15">
-        <div class="radio-group">
-          <div class="radio-item">
-            <input type="radio" name="leftFont" id="leftChSong">
-            <label for="leftChSong">宋体</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="leftFont" id="leftChHand">
-            <label for="leftChHand">手写体</label>
-          </div>
-        </div>
-        <!-- 冲突提示 -->
-        <div class="error提示" id="leftError">⚠️ 不可同时烫印英文和中文，请选择其中一种</div>
-      </div>
-
-      <div class="input-group">
-        <label>3. 印字颜色：</label>
-        <div class="radio-group">
-          <div class="radio-item">
-            <input type="radio" name="leftPrintColor" id="leftGold" checked>
-            <label for="leftGold">烫金</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="leftPrintColor" id="leftSilver">
-            <label for="leftSilver">烫银</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="leftPrintColor" id="leftOriginal">
-            <label for="leftOriginal">原色（仅野牛皮为3号区域时可用）</label>
-          </div>
-        </div>
+      <div class="radio-item">
+        <input type="radio" name="leftEngFont" id="leftEngCursive" value="cursive">
+        <label for="leftEngCursive">花体</label>
       </div>
     </div>
+
+    <div class="option-label">汉字（<span class="price-tag">+30元</span>）</div>
+    <input type="text" id="leftChText" placeholder="请输入汉字（限10字符内）">
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" name="leftChFont" id="leftChNormal" value="normal" checked>
+        <label for="leftChNormal">手写体</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="leftChFont" id="leftChSong" value="song">
+        <label for="leftChSong">宋体</label>
+      </div>
+    </div>
+
+    <div class="option-label">印字颜色</div>
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" name="leftPrintColor" id="leftGold" value="leftGold" checked>
+        <label for="leftGold">烫金</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="leftPrintColor" id="leftSilver" value="leftSilver">
+        <label for="leftSilver">烫银</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="leftPrintColor" id="leftOriginal" value="leftOriginal">
+        <label for="leftOriginal">原色烙印（仅野牛皮可用）</label>
+      </div>
+    </div>
+    <div class="warning" id="leftHandWarning">一只手不能同时印中文+英文</div>
+    <div class="warning" id="leftCowhideWarning">野牛皮只能原色烙印，无法烫金、烫银</div>
+    <div class="note">注：英文/数字与汉字只能选一种输入</div>
   </div>
 
   <!-- 右手印字 -->
-  <div class="hand-section">
-    <div class="hand-title">右手</div>
-    
-    <div class="option-group">
-      <div class="input-group">
-        <label>1. 英文/数字：</label>
-        <input type="text" id="rightEngText" placeholder="请输入内容（限25个字符内，含标点 , 。？！）" maxlength="25">
-        <div class="radio-group">
-          <div class="radio-item">
-            <input type="radio" name="rightFont" id="rightEngCursive" checked>
-            <label for="rightEngCursive">花体</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="rightFont" id="rightEngNormal">
-            <label for="rightEngNormal">正字体</label>
-          </div>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>2. 汉字：<span class="fee-tag">（+30元定制铜模）</span></label>
-        <input type="text" id="rightChText" placeholder="请输入内容（限15字以内）" maxlength="15">
-        <div class="radio-group">
-          <div class="radio-item">
-            <input type="radio" name="rightFont" id="rightChSong">
-            <label for="rightChSong">宋体</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="rightFont" id="rightChHand">
-            <label for="rightChHand">手写体</label>
-          </div>
-        </div>
-        <!-- 冲突提示 -->
-        <div class="error提示" id="rightError">⚠️ 不可同时烫印英文和中文，请选择其中一种</div>
-      </div>
-
-      <div class="input-group">
-        <label>3. 印字颜色：</label>
-        <div class="radio-group">
-          <div class="radio-item">
-            <input type="radio" name="rightPrintColor" id="rightGold" checked>
-            <label for="rightGold">烫金</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="rightPrintColor" id="rightSilver">
-            <label for="rightSilver">烫银</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="rightPrintColor" id="rightOriginal">
-            <label for="rightOriginal">原色（仅野牛皮为3号区域时可用）</label>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 二、手腕内侧小型图案（独立大类目） -->
-  <div class="section-title">二、手腕内侧小型图案（需提供线稿图）</div>
-  <div class="note">左手、右手可分别定制，每侧+30元，无需烫印则不点选即可</div>
-
-  <!-- 左手图案 -->
-  <div class="hand-section">
-    <div class="hand-title">左手</div>
-    
-    <div class="option-group">
+  <div class="section">
+    <div class="section-title">四、右手手腕内侧印字</div>
+    <div class="option-label">英文/数字（免费）</div>
+    <input type="text" id="rightEngText" placeholder="请输入英文、数字或标点（限25字符内，标点仅限,。？！）">
+    <div class="radio-group">
       <div class="radio-item">
-        <input type="checkbox" id="leftWristPattern" value="30">
-        <label for="leftWristPattern">需要定制左手内侧图案（+30元）</label>
+        <input type="radio" name="rightEngFont" id="rightEngNormal" value="normal" checked>
+        <label for="rightEngNormal">正字体</label>
       </div>
-      
-      <div class="input-group">
-        <label>图案颜色：</label>
-        <div class="radio-group">
-          <div class="radio-item">
-            <input type="radio" name="leftPatternColor" id="leftPatternGold" checked>
-            <label for="leftPatternGold">烫金</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="leftPatternColor" id="leftPatternSilver">
-            <label for="leftPatternSilver">烫银</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="leftPatternColor" id="leftPatternOriginal">
-            <label for="leftPatternOriginal">原色烙印（仅野牛皮3号区域时可用）</label>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 右手图案 -->
-  <div class="hand-section">
-    <div class="hand-title">右手</div>
-    
-    <div class="option-group">
       <div class="radio-item">
-        <input type="checkbox" id="rightWristPattern" value="30">
-        <label for="rightWristPattern">需要定制右手内侧图案（+30元）</label>
+        <input type="radio" name="rightEngFont" id="rightEngCursive" value="cursive">
+        <label for="rightEngCursive">花体</label>
       </div>
-      
-      <div class="input-group">
-        <label>图案颜色：</label>
-        <div class="radio-group">
-          <div class="radio-item">
-            <input type="radio" name="rightPatternColor" id="rightPatternGold" checked>
-            <label for="rightPatternGold">烫金</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="rightPatternColor" id="rightPatternSilver">
-            <label for="rightPatternSilver">烫银</label>
-          </div>
-          <div class="radio-item">
-            <input type="radio" name="rightPatternColor" id="rightPatternOriginal">
-            <label for="rightPatternOriginal">原色烙印（仅野牛皮为3号区域时可用）</label>
-          </div>
+    </div>
+
+    <div class="option-label">汉字（<span class="price-tag">+30元</span>）</div>
+    <input type="text" id="rightChText" placeholder="请输入汉字（限10字符内）">
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" name="rightChFont" id="rightChNormal" value="normal" checked>
+        <label for="rightChNormal">手写体</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="rightChFont" id="rightChSong" value="song">
+        <label for="rightChSong">宋体</label>
+      </div>
+    </div>
+
+    <div class="option-label">印字颜色</div>
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" name="rightPrintColor" id="rightGold" value="rightGold" checked>
+        <label for="rightGold">烫金</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="rightPrintColor" id="rightSilver" value="rightSilver">
+        <label for="rightSilver">烫银</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="rightPrintColor" id="rightOriginal" value="rightOriginal">
+        <label for="rightOriginal">原色烙印（仅野牛皮可用）</label>
+      </div>
+    </div>
+    <div class="warning" id="rightHandWarning">一只手不能同时印中文+英文</div>
+    <div class="warning" id="rightCowhideWarning">野牛皮只能原色烙印，无法烫金、烫银</div>
+    <div class="note">注：英文/数字与汉字只能选一种输入</div>
+  </div>
+
+  <!-- 手腕图案 -->
+  <div class="section">
+    <div class="section-title">五、手腕内侧图案</div>
+    <div class="option-group">
+      <div class="option-label">左手图案（<span class="price-tag">+30元</span>）</div>
+      <div class="radio-group">
+        <div class="radio-item">
+          <input type="radio" name="leftWristPattern" id="leftPatternYes" value="yes">
+          <label for="leftPatternYes">添加图案</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" name="leftWristPattern" id="leftPatternNo" value="no" checked>
+          <label for="leftPatternNo">不添加</label>
         </div>
       </div>
+      <div class="note">（如有需求，请勾选后联系客服提供线稿图）</div>
+      <div class="radio-group" id="leftPatternColorGroup" style="display: none;">
+        <div class="radio-item">
+          <input type="radio" name="leftPatternColor" id="leftPatternGold" value="leftPatternGold" checked>
+          <label for="leftPatternGold">烫金</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" name="leftPatternColor" id="leftPatternSilver" value="leftPatternSilver">
+          <label for="leftPatternSilver">烫银</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" name="leftPatternColor" id="leftPatternOriginal" value="leftPatternOriginal">
+          <label for="leftPatternOriginal">原色烙印（仅野牛皮可用）</label>
+        </div>
+      </div>
+      <div class="warning" id="leftPatternCowhideWarning">野牛皮只能原色烙印，无法烫金、烫银。</div>
+    </div>
+
+    <div class="option-group">
+      <div class="option-label">右手图案（<span class="price-tag">+30元</span>）</div>
+      <div class="radio-group">
+        <div class="radio-item">
+          <input type="radio" name="rightWristPattern" id="rightPatternYes" value="yes">
+          <label for="rightPatternYes">添加图案</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" name="rightWristPattern" id="rightPatternNo" value="no" checked>
+          <label for="rightPatternNo">不添加</label>
+        </div>
+      </div>
+      <div class="note">（如有需求，请勾选后联系客服提供线稿图）</div>
+      <div class="radio-group" id="rightPatternColorGroup" style="display: none;">
+        <div class="radio-item">
+          <input type="radio" name="rightPatternColor" id="rightPatternGold" value="rightPatternGold" checked>
+          <label for="rightPatternGold">烫金</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" name="rightPatternColor" id="rightPatternSilver" value="rightPatternSilver">
+          <label for="rightPatternSilver">烫银</label>
+        </div>
+        <div class="radio-item">
+          <input type="radio" name="rightPatternColor" id="rightPatternOriginal" value="rightPatternOriginal">
+          <label for="rightPatternOriginal">原色烙印（仅野牛皮可用）</label>
+        </div>
+      </div>
+      <div class="warning" id="rightPatternCowhideWarning">野牛皮只能原色烙印，无法烫金、烫银。</div>
     </div>
   </div>
 
-  <!-- 三、Logo替换 -->
-  <div class="section-title">三、Logo替换</div>
-  <div class="option-group">
-    <div class="radio-item">
-      <input type="checkbox" id="logoReplace" value="70">
-      <label for="logoReplace">定制Logo（追加70元费用定制铜模，烫印工艺，无颜色，比例约为4.5:9.5的长方形，需联系客服提供图案）</label>
+  <!-- 其他定制 -->
+  <div class="section">
+    <div class="section-title">六、其他定制选项</div>
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" name="logoReplace" id="logoReplaceYes" value="yes">
+        <label for="logoReplaceYes">替换为自己的Logo（<span class="price-tag">+70元</span>）</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="logoReplace" id="logoReplaceNo" value="no" checked>
+        <label for="logoReplaceNo">不替换Logo</label>
+      </div>
     </div>
+    <div class="note">（如有需求，请勾选后联系客服提供线稿图）</div>
+
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" name="embroidery" id="embroideryYes" value="yes">
+        <label for="embroideryYes">手背添加刺绣图案（<span class="price-tag">100-300元，需单独报价</span>）</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" name="embroidery" id="embroideryNo" value="no" checked>
+        <label for="embroideryNo">不添加刺绣</label>
+      </div>
+    </div>
+    <div class="note">（如有需求，请勾选后联系客服提供线稿图）</div>
   </div>
 
-  <!-- 四、手背刺绣 -->
-  <div class="section-title">四、手背刺绣</div>
-  <div class="option-group">
-    <div class="radio-item">
-      <input type="checkbox" id="embroidery" value="100">
-      <label for="embroidery">需要定制（需联系客服提供图案，费用约100～300元）</label>
-    </div>
-  </div>
-
-  <!-- 定制额外费用 -->
-  <div class="custom-extra">定制额外费用：¥<span id="customExtra">0</span></div>
-
-  <!-- 按钮组 -->
   <div class="btn-group">
     <button class="prev-btn" id="prevBtn">上一页：配色预览</button>
-    <button class="next-btn" id="nextBtn">下一步：看最终方案</button>
+    <button class="next-btn" id="nextBtn">下一步：最终方案</button>
   </div>
 
   <script>
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    const customExtraEl = document.getElementById('customExtra');
-    const totalPriceEl = document.getElementById('totalPrice');
+    // 获取DOM元素
+    const currentPriceEl = document.getElementById('currentPrice');
+    const leftPatternYes = document.getElementById('leftPatternYes');
+    const leftPatternNo = document.getElementById('leftPatternNo');
+    const leftPatternColorGroup = document.getElementById('leftPatternColorGroup');
+    const rightPatternYes = document.getElementById('rightPatternYes');
+    const rightPatternNo = document.getElementById('rightPatternNo');
+    const rightPatternColorGroup = document.getElementById('rightPatternColorGroup');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
-    
-    // 输入框和提示元素
     const leftEngText = document.getElementById('leftEngText');
     const leftChText = document.getElementById('leftChText');
-    const leftError = document.getElementById('leftError');
     const rightEngText = document.getElementById('rightEngText');
     const rightChText = document.getElementById('rightChText');
-    const rightError = document.getElementById('rightError');
     
-    let customExtra = 0;
-    // 跟踪汉字选项的费用（左右各30元）
-    let chineseFee = 0;
-    // 获取之前页面的价格
-    const basePrice = parseInt(localStorage.getItem('basePrice')) || 0;
-    const colorExtra = parseInt(localStorage.getItem('colorExtra')) || 0;
+    // 警告元素
+    const rareLeatherWarning = document.getElementById('rareLeatherWarning');
+    const textLogoWarning = document.getElementById('textLogoWarning');
+    const leftHandWarning = document.getElementById('leftHandWarning');
+    const rightHandWarning = document.getElementById('rightHandWarning');
+    const leftCowhideWarning = document.getElementById('leftCowhideWarning');
+    const rightCowhideWarning = document.getElementById('rightCowhideWarning');
+    const leftPatternCowhideWarning = document.getElementById('leftPatternCowhideWarning');
+    const rightPatternCowhideWarning = document.getElementById('rightPatternCowhideWarning');
 
-    // 计算总价格
-    function calculateTotal() {
-      const total = basePrice + colorExtra + customExtra + chineseFee;
-      totalPriceEl.textContent = total;
-    }
+    // 获取皮革类型
+    const leatherType = localStorage.getItem('leatherType') || '';
+    const isRareLeather = ['鲨鱼皮', '鳄鱼皮', '鸵鸟皮', '蜥蜴皮'].includes(leatherType);
+    const isCowhide = leatherType === '野牛皮';
 
-    // 检查输入冲突并显示提示
-    function checkInputConflict(engInput, chInput, errorEl) {
-      const engHasContent = engInput.value.trim() !== '';
-      const chHasContent = chInput.value.trim() !== '';
+    // 页面加载时恢复之前的选择
+    window.onload = function() {
+      // 加载之前保存的定制选项
+      const savedOptions = JSON.parse(localStorage.getItem('customOptions')) || {};
       
-      if (engHasContent && chHasContent) {
-        errorEl.style.display = 'block';
-        return true; // 存在冲突
-      } else {
-        errorEl.style.display = 'none';
-        // 更新汉字费用
-        if (chHasContent) {
-          if (engInput.id.includes('left') && !chineseFee.toString().includes('left')) {
-            chineseFee += 30;
-          } else if (engInput.id.includes('right') && !chineseFee.toString().includes('right')) {
-            chineseFee += 30;
-          }
-        } else {
-          if (engInput.id.includes('left') && chineseFee >= 30) {
-            chineseFee -= 30;
-          } else if (engInput.id.includes('right') && chineseFee >= 30) {
-            chineseFee -= 30;
-          }
+      // 恢复Logo颜色选择
+      if (savedOptions.logoColor) {
+        const logoColorEl = document.getElementById(savedOptions.logoColor);
+        if (logoColorEl) logoColorEl.checked = true;
+      }
+      
+      // 恢复Logo缝纫方式
+      if (savedOptions.logoStitch) {
+        const logoStitchEl = document.getElementById(savedOptions.logoStitch);
+        if (logoStitchEl) logoStitchEl.checked = true;
+      }
+      
+      // 恢复左手印字
+      if (savedOptions.leftEngText) leftEngText.value = savedOptions.leftEngText;
+      if (savedOptions.leftEngFont) {
+        const leftEngFontEl = document.getElementById('leftEng' + (savedOptions.leftEngFont === 'cursive' ? 'Cursive' : 'Normal'));
+        if (leftEngFontEl) leftEngFontEl.checked = true;
+      }
+      if (savedOptions.leftChText) leftChText.value = savedOptions.leftChText;
+      if (savedOptions.leftChFont) {
+        const leftChFontEl = document.getElementById('leftCh' + (savedOptions.leftChFont === 'song' ? 'Song' : 'Normal'));
+        if (leftChFontEl) leftChFontEl.checked = true;
+      }
+      if (savedOptions.leftPrintColor) {
+        const leftPrintColorEl = document.getElementById(savedOptions.leftPrintColor);
+        if (leftPrintColorEl) leftPrintColorEl.checked = true;
+      }
+      
+      // 恢复右手印字
+      if (savedOptions.rightEngText) rightEngText.value = savedOptions.rightEngText;
+      if (savedOptions.rightEngFont) {
+        const rightEngFontEl = document.getElementById('rightEng' + (savedOptions.rightEngFont === 'cursive' ? 'Cursive' : 'Normal'));
+        if (rightEngFontEl) rightEngFontEl.checked = true;
+      }
+      if (savedOptions.rightChText) rightChText.value = savedOptions.rightChText;
+      if (savedOptions.rightChFont) {
+        const rightChFontEl = document.getElementById('rightCh' + (savedOptions.rightChFont === 'song' ? 'Song' : 'Normal'));
+        if (rightChFontEl) rightChFontEl.checked = true;
+      }
+      if (savedOptions.rightPrintColor) {
+        const rightPrintColorEl = document.getElementById(savedOptions.rightPrintColor);
+        if (rightPrintColorEl) rightPrintColorEl.checked = true;
+      }
+      
+      // 恢复图案选择
+      if (savedOptions.leftWristPattern === 'yes') {
+        leftPatternYes.checked = true;
+        leftPatternColorGroup.style.display = 'flex';
+        if (savedOptions.leftPatternColor) {
+          const leftPatternColorEl = document.getElementById(savedOptions.leftPatternColor);
+          if (leftPatternColorEl) leftPatternColorEl.checked = true;
         }
-        chineseFee = Math.max(0, chineseFee); // 确保不出现负数
-        customExtraEl.textContent = customExtra + chineseFee;
-        calculateTotal();
-        return false; // 无冲突
+      }
+      if (savedOptions.rightWristPattern === 'yes') {
+        rightPatternYes.checked = true;
+        rightPatternColorGroup.style.display = 'flex';
+        if (savedOptions.rightPatternColor) {
+          const rightPatternColorEl = document.getElementById(savedOptions.rightPatternColor);
+          if (rightPatternColorEl) rightPatternColorEl.checked = true;
+        }
+      }
+      
+      // 恢复其他选项
+      if (savedOptions.logoReplace) {
+        const logoReplaceEl = document.getElementById('logoReplace' + (savedOptions.logoReplace === 'yes' ? 'Yes' : 'No'));
+        if (logoReplaceEl) logoReplaceEl.checked = true;
+      }
+      if (savedOptions.embroidery) {
+        const embroideryEl = document.getElementById('embroidery' + (savedOptions.embroidery === 'yes' ? 'Yes' : 'No'));
+        if (embroideryEl) embroideryEl.checked = true;
+      }
+      
+      // 检查并显示警告
+      checkWarnings();
+      // 计算价格
+      calculatePrice();
+    };
+
+    // 图案选择逻辑
+    leftPatternYes.addEventListener('change', function() {
+      leftPatternColorGroup.style.display = this.checked ? 'flex' : 'none';
+      checkWarnings();
+      calculatePrice();
+    });
+    
+    leftPatternNo.addEventListener('change', function() {
+      leftPatternColorGroup.style.display = this.checked ? 'none' : 'flex';
+      checkWarnings();
+      calculatePrice();
+    });
+    
+    rightPatternYes.addEventListener('change', function() {
+      rightPatternColorGroup.style.display = this.checked ? 'flex' : 'none';
+      checkWarnings();
+      calculatePrice();
+    });
+    
+    rightPatternNo.addEventListener('change', function() {
+      rightPatternColorGroup.style.display = this.checked ? 'none' : 'flex';
+      checkWarnings();
+      calculatePrice();
+    });
+
+    // 输入限制和验证
+    leftEngText.addEventListener('input', function() {
+      // 限制字符数
+      if (this.value.length > 25) this.value = this.value.substring(0, 25);
+      
+      // 限制标点符号
+      const allowedPunctuation = [',', '。', '？', '！'];
+      this.value = this.value.split('').filter(char => {
+        return /[a-zA-Z0-9]/.test(char) || allowedPunctuation.includes(char) || char === ' ';
+      }).join('');
+      
+      // 英文输入时清空汉字
+      if (this.value) leftChText.value = '';
+      
+      checkWarnings();
+      calculatePrice();
+    });
+    
+    leftChText.addEventListener('input', function() {
+      // 限制字符数
+      if (this.value.length > 10) this.value = this.value.substring(0, 10);
+      
+      // 汉字输入时清空英文
+      if (this.value) leftEngText.value = '';
+      
+      checkWarnings();
+      calculatePrice();
+    });
+    
+    rightEngText.addEventListener('input', function() {
+      // 限制字符数
+      if (this.value.length > 25) this.value = this.value.substring(0, 25);
+      
+      // 限制标点符号
+      const allowedPunctuation = [',', '。', '？', '！'];
+      this.value = this.value.split('').filter(char => {
+        return /[a-zA-Z0-9]/.test(char) || allowedPunctuation.includes(char) || char === ' ';
+      }).join('');
+      
+      // 英文输入时清空汉字
+      if (this.value) rightChText.value = '';
+      
+      checkWarnings();
+      calculatePrice();
+    });
+    
+    rightChText.addEventListener('input', function() {
+      // 限制字符数
+      if (this.value.length > 10) this.value = this.value.substring(0, 10);
+      
+      // 汉字输入时清空英文
+      if (this.value) rightEngText.value = '';
+      
+      checkWarnings();
+      calculatePrice();
+    });
+
+    // 检查并显示警告信息
+    function checkWarnings() {
+      // 1. 稀有皮革警告
+      const selectedLogoColor = document.querySelector('input[name="logoColor"]:checked').value;
+      const isTextLogo = selectedLogoColor === 'logoTextGold' || selectedLogoColor === 'logoTextSilver';
+      
+      rareLeatherWarning.style.display = (isRareLeather && !isTextLogo) ? 'block' : 'none';
+      
+      // 2. 文字Logo无缝纫警告
+      const selectedStitch = document.querySelector('input[name="logoStitch"]:checked').value;
+      textLogoWarning.style.display = (isTextLogo && selectedStitch !== 'stitchPrintOnly') ? 'block' : 'none';
+      
+      // 3. 单手同时输入中英文警告
+      leftHandWarning.style.display = (leftEngText.value && leftChText.value) ? 'block' : 'none';
+      rightHandWarning.style.display = (rightEngText.value && rightChText.value) ? 'block' : 'none';
+      
+      // 4. 野牛皮印字颜色警告
+      const leftPrintColor = document.querySelector('input[name="leftPrintColor"]:checked').value;
+      const rightPrintColor = document.querySelector('input[name="rightPrintColor"]:checked').value;
+      
+      leftCowhideWarning.style.display = (isCowhide && leftPrintColor !== 'leftOriginal') ? 'block' : 'none';
+      rightCowhideWarning.style.display = (isCowhide && rightPrintColor !== 'rightOriginal') ? 'block' : 'none';
+      
+      // 5. 野牛皮图案颜色警告
+      if (leftPatternYes.checked) {
+        const leftPatternColor = document.querySelector('input[name="leftPatternColor"]:checked').value;
+        leftPatternCowhideWarning.style.display = (isCowhide && leftPatternColor !== 'leftPatternOriginal') ? 'block' : 'none';
+      } else {
+        leftPatternCowhideWarning.style.display = 'none';
+      }
+      
+      if (rightPatternYes.checked) {
+        const rightPatternColor = document.querySelector('input[name="rightPatternColor"]:checked').value;
+        rightPatternCowhideWarning.style.display = (isCowhide && rightPatternColor !== 'rightPatternOriginal') ? 'block' : 'none';
+      } else {
+        rightPatternCowhideWarning.style.display = 'none';
       }
     }
 
-    // 绑定输入事件
-    function setupInputEvents() {
-      // 左手输入检查
-      leftEngText.addEventListener('input', () => {
-        checkInputConflict(leftEngText, leftChText, leftError);
-      });
-      leftChText.addEventListener('input', () => {
-        checkInputConflict(leftEngText, leftChText, leftError);
-      });
-
-      // 右手输入检查
-      rightEngText.addEventListener('input', () => {
-        checkInputConflict(rightEngText, rightChText, rightError);
-      });
-      rightChText.addEventListener('input', () => {
-        checkInputConflict(rightEngText, rightChText, rightError);
-      });
+    // 价格计算
+    function calculatePrice() {
+      // 获取基础价格
+      const basePrice = parseInt(localStorage.getItem('basePrice')) || 0;
+      const colorExtra = parseInt(localStorage.getItem('colorExtra')) || 0;
+      let customExtra = 0;
+      
+      // 左手汉字加价
+      if (leftChText.value) customExtra += 30;
+      
+      // 右手汉字加价
+      if (rightChText.value) customExtra += 30;
+      
+      // 左手图案加价
+      if (leftPatternYes.checked) customExtra += 30;
+      
+      // 右手图案加价
+      if (rightPatternYes.checked) customExtra += 30;
+      
+      // Logo替换加价
+      if (document.getElementById('logoReplaceYes').checked) customExtra += 70;
+      
+      // 保存定制额外费用
+      localStorage.setItem('customExtra', customExtra);
+      
+      // 计算总价
+      const total = basePrice + colorExtra + customExtra;
+      currentPriceEl.textContent = total;
     }
 
-    // 计算定制费用（除汉字外的其他选项）
-    checkboxes.forEach(box => {
-      box.addEventListener('change', () => {
-        const value = parseInt(box.value) || 0;
-        if (box.checked) {
-          customExtra += value;
-        } else {
-          customExtra -= value;
-        }
-        customExtraEl.textContent = customExtra + chineseFee;
-        calculateTotal();
-      });
-    });
-
-    // 上一页按钮
-    prevBtn.addEventListener('click', () => {
-      window.location.href = '../pages/color.html'; // 跳转至配色页面
-    });
-
-    // 下一步按钮
-    nextBtn.addEventListener('click', () => {
-      // 检查是否存在冲突
-      const leftConflict = checkInputConflict(leftEngText, leftChText, leftError);
-      const rightConflict = checkInputConflict(rightEngText, rightChText, rightError);
+    // 保存当前页面的选择
+    function saveCurrentOptions() {
+      const customOptions = {
+        // Logo设置
+        logoColor: document.querySelector('input[name="logoColor"]:checked').value,
+        logoStitch: document.querySelector('input[name="logoStitch"]:checked').value,
+        
+        // 左手印字
+        leftEngText: leftEngText.value,
+        leftEngFont: document.querySelector('input[name="leftEngFont"]:checked').value,
+        leftChText: leftChText.value,
+        leftChFont: document.querySelector('input[name="leftChFont"]:checked').value,
+        leftPrintColor: document.querySelector('input[name="leftPrintColor"]:checked').value,
+        
+        // 右手印字
+        rightEngText: rightEngText.value,
+        rightEngFont: document.querySelector('input[name="rightEngFont"]:checked').value,
+        rightChText: rightChText.value,
+        rightChFont: document.querySelector('input[name="rightChFont"]:checked').value,
+        rightPrintColor: document.querySelector('input[name="rightPrintColor"]:checked').value,
+        
+        // 图案设置
+        leftWristPattern: document.querySelector('input[name="leftWristPattern"]:checked').value,
+        leftPatternColor: document.querySelector('input[name="leftPatternColor"]:checked')?.value,
+        rightWristPattern: document.querySelector('input[name="rightWristPattern"]:checked').value,
+        rightPatternColor: document.querySelector('input[name="rightPatternColor"]:checked')?.value,
+        
+        // 其他选项
+        logoReplace: document.querySelector('input[name="logoReplace"]:checked').value,
+        embroidery: document.querySelector('input[name="embroidery"]:checked').value
+      };
       
-      if (leftConflict || rightConflict) {
-        alert('存在输入冲突，请解决后再继续：不可同时烫印英文和中文');
+      // 保存到localStorage
+      localStorage.setItem('customOptions', JSON.stringify(customOptions));
+    }
+
+    // 按钮事件
+    prevBtn.addEventListener('click', function() {
+      saveCurrentOptions();
+      window.location.href = 'color.html'; // 跳转到配色预览页面
+    });
+    
+    nextBtn.addEventListener('click', function() {
+      // 检查是否有阻止提交的警告
+      if (rareLeatherWarning.style.display === 'block' || 
+          textLogoWarning.style.display === 'block' ||
+          leftHandWarning.style.display === 'block' ||
+          rightHandWarning.style.display === 'block' ||
+          (isCowhide && (leftCowhideWarning.style.display === 'block' || 
+                         rightCowhideWarning.style.display === 'block' ||
+                         leftPatternCowhideWarning.style.display === 'block' ||
+                         rightPatternCowhideWarning.style.display === 'block'))) {
+        alert('请修正页面中的警告问题后再继续');
         return;
       }
-
-      // 保存定制选项状态
-      const customOptions = {
-        logoColor: document.querySelector('input[name="logoColor"]:checked').id,
-        logoStitch: document.querySelector('input[name="logoStitch"]:checked').id,
-        leftWristPattern: document.getElementById('leftWristPattern').checked,
-        rightWristPattern: document.getElementById('rightWristPattern').checked,
-        leftPatternColor: document.querySelector('input[name="leftPatternColor"]:checked').id,
-        rightPatternColor: document.querySelector('input[name="rightPatternColor"]:checked').id,
-        logoReplace: document.getElementById('logoReplace').checked,
-        embroidery: document.getElementById('embroidery').checked,
-        leftEngText: leftEngText.value,
-        leftChText: leftChText.value,
-        rightEngText: rightEngText.value,
-        rightChText: rightChText.value,
-        totalCustomFee: customExtra + chineseFee
-      };
-      localStorage.setItem('customOptions', JSON.stringify(customOptions));
-      localStorage.setItem('customExtra', customExtra + chineseFee);
       
-      window.location.href = 'result.html';
+      saveCurrentOptions();
+      window.location.href = 'result.html'; // 跳转到最终方案页面
     });
 
-    // 初始化
-    setupInputEvents();
-    customExtraEl.textContent = 0;
-    calculateTotal();
+    // 监听所有单选按钮变化，实时计算价格和检查警告
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        calculatePrice();
+        checkWarnings();
+      });
+    });
   </script>
 </body>
 </html>
