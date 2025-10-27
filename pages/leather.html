@@ -59,8 +59,14 @@
     <div class="leather-item" data-type="Swift牛皮+鲨鱼皮" data-price="3599">
       Swift牛皮+鲨鱼皮 <span class="price-tag">¥3599</span>
     </div>
-    <div class="leather-item" data-type="Swift牛皮+鳄鱼/鸵鸟/蜥蜴皮" data-price="3999">
-      Swift牛皮+鳄鱼/鸵鸟/蜥蜴皮 <span class="price-tag">¥3999</span>
+    <div class="leather-item" data-type="Swift牛皮+鳄鱼皮" data-price="3999">
+      Swift牛皮+鳄鱼皮 <span class="price-tag">¥3999</span>
+    </div>
+    <div class="leather-item" data-type="Swift牛皮+鸵鸟皮" data-price="3999">
+      Swift牛皮+鸵鸟皮 <span class="price-tag">¥3999</span>
+    </div>
+    <div class="leather-item" data-type="Swift牛皮+蜥蜴皮" data-price="3999">
+      Swift牛皮+蜥蜴皮 <span class="price-tag">¥3999</span>
     </div>
   </div>
   
@@ -76,10 +82,23 @@
     const currentPriceEl = document.getElementById('currentPrice');
     let selectedLeather = 'Swift牛皮'; // 默认选中第一个选项
 
-    // 初始化本地存储
-    localStorage.setItem('customLeather', selectedLeather);
-    localStorage.setItem('basePrice', '1699');
-    localStorage.setItem('leatherType', selectedLeather); // 用于配色页判断皮革类型
+    // 读取已选皮革（如果有）
+    const savedLeather = localStorage.getItem('leatherType');
+    const savedPrice = localStorage.getItem('basePrice');
+    if (savedLeather && savedPrice) {
+      document.querySelectorAll('.leather-item').forEach(item => {
+        if (item.dataset.type === savedLeather) {
+          item.classList.add('active');
+          selectedLeather = savedLeather;
+          currentPriceEl.innerText = savedPrice;
+        }
+      });
+    } else {
+      // 初始化本地存储
+      localStorage.setItem('customLeather', selectedLeather);
+      localStorage.setItem('basePrice', '1699');
+      localStorage.setItem('leatherType', selectedLeather);
+    }
 
     // 皮革选项点击事件
     leatherList.addEventListener('click', (e) => {
@@ -102,12 +121,12 @@
 
     // 上一页按钮
     prevBtn.addEventListener('click', () => {
-      window.location.href = '../pages/size.html'; // 假设尺寸页路径为size.html
+      window.location.href = 'size.html';
     });
 
     // 下一步按钮
     nextBtn.addEventListener('click', () => {
-      window.location.href = '../pages/color.html';
+      window.location.href = 'color.html';
     });
   </script>
 </body>
