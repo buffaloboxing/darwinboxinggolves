@@ -28,6 +28,13 @@
     const nextBtn = document.getElementById('nextBtn');
     let selectedSize = '';
 
+    // 读取已选尺寸（如果有）
+    const savedSize = localStorage.getItem('customSize');
+    if (savedSize) {
+      document.querySelector(`.size-item[data-size="${savedSize}"]`).classList.add('active');
+      selectedSize = savedSize;
+    }
+
     sizeList.addEventListener('click', (e) => {
       if (e.target.classList.contains('size-item')) {
         document.querySelectorAll('.size-item').forEach(item => item.classList.remove('active'));
@@ -39,7 +46,8 @@
     nextBtn.addEventListener('click', () => {
       if (selectedSize) {
         localStorage.setItem('customSize', selectedSize);
-        window.location.href = '../pages/leather.html';
+        // 修复路径，同目录下直接跳转
+        window.location.href = 'leather.html';
       } else {
         alert('请先选尺寸哦！');
       }
