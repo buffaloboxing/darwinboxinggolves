@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>1.选拳套尺寸</title>
+  <style>
+    body { font-family: 微软雅黑; padding: 20px; max-width: 750px; margin: 0 auto; }
+    .title { font-size: 20px; font-weight: bold; margin: 20px 0; }
+    .size-list { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 30px; }
+    .size-item { border: 1px solid #ddd; padding: 12px 24px; border-radius: 6px; cursor: pointer; }
+    .size-item.active { border-color: #07c160; background: #f8f8f8; color: #07c160; }
+    .next-btn { width: 100%; background: #07c160; color: #fff; border: none; padding: 15px; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="title">选择拳套尺寸（盎司）</div>
+  <div class="size-list" id="sizeList">
+    <div class="size-item" data-size="8">8盎司</div>
+    <div class="size-item" data-size="10">10盎司</div>
+    <div class="size-item" data-size="12">12盎司</div>
+    <div class="size-item" data-size="14">14盎司</div>
+    <div class="size-item" data-size="16">16盎司</div>
+  </div>
+  <button class="next-btn" id="nextBtn">下一步：选皮革</button>
+
+  <script>
+    const sizeList = document.getElementById('sizeList');
+    const nextBtn = document.getElementById('nextBtn');
+    let selectedSize = '';
+
+    sizeList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('size-item')) {
+        document.querySelectorAll('.size-item').forEach(item => item.classList.remove('active'));
+        e.target.classList.add('active');
+        selectedSize = e.target.dataset.size;
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (selectedSize) {
+        localStorage.setItem('customSize', selectedSize);
+        window.location.href = '../pages/leather.html';
+      } else {
+        alert('请先选尺寸哦！');
+      }
+    });
+  </script>
+</body>
+</html>

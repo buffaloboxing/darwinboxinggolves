@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3.配色预览（精准弧线版）</title>
+  <style>
+    body { font-family: 微软雅黑; padding: 20px; max-width: 750px; margin: 0 auto; }
+    .title { font-size: 20px; font-weight: bold; margin: 20px 0; }
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      height: auto;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background-color: #f9f9f9;
+      overflow: hidden;
+    }
+    .canvas-placeholder {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 14px;
+      z-index: 1;
+    }
+    canvas {
+      position: relative;
+      width: 100%;
+      height: auto;
+      z-index: 2;
+    }
+    .color-container { 
+      position: relative; 
+      margin-top: 10px; 
+      width: 100%; 
+      display: flex;
+      flex-wrap: wrap; 
+      gap: 10px; 
+    }
+    .color-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 0 2px transparent;
+      transition: box-shadow 0.2s;
+    }
+    .color-circle.selected {
+      box-shadow: 0 0 0 2px #07c160, 0 0 0 4px rgba(7, 193, 96, 0.2);
+      transform: scale(1.1);
+    }
+    .current-price {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin: 10px 0;
+    }
+    .price-alert {
+      padding: 10px;
+      background: #fff1f0;
+      border: 1px solid #ffa39e;
+      border-radius: 6px;
+      margin: 10px 0;
+      color: #e83e3e;
+      font-size: 14px;
+      display: none;
+    }
+    .alert-box { 
+      padding: 12px; 
+      background: #fff8e1; 
+      border: 1px solid #ffe082; 
+      border-radius: 6px; 
+      margin: 10px 0; 
+      color: #e65100; 
+      font-size: 14px; 
+    }
+    .color-rule { font-size: 14px; color: #666; margin: 5px 0; line-height: 1.5; }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .prev-btn, .next-btn {
+      flex: 1;
+      padding: 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .prev-btn {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .next-btn {
+      background: #07c160;
+      color: #fff;
+      border: none;
+    }
+    .controls {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 6px;
+    }
+    select {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 10px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">配色预览（选区域+颜色上色）</div>
+  
+  <div class="current-price">当前价格：¥<span id="currentPrice">1699</span></div>
+  <!-- 价格提示框 -->
+  <div class="price-alert" id="priceAlert"></div>
+
+  <div class="canvas-container">
+    <div class="canvas-placeholder">拳套预览图加载中...</div>
+    <canvas id="gloveCanvas"></canvas>
+  </div>
+
+  <div id="leatherTip" class="alert-box" style="display: none;"></div>
+
+  <div class="color-rules">
+    <div class="color-rule">①、②、③号区域：可免费选择2种颜色，每额外增加1种+300元</div>
+    <div class="color-rule">④、⑤、⑥、⑦、⑧号区域：可在免费2种颜色基础上再免费选1种，每额外增加1种+150元</div>
+  </div>
+
+  <div class="controls">
+    <div>
+      <label>选上色区域：</label>
+      <select id="areaSelect">
+        <option value="1">① </option>
+        <option value="2">② </option>
+        <option value="3">③ </option>
+        <option value="4">④ </option>
+        <option value="5">⑤ </option>
+        <option value="6">⑥ </option>
+        <option value="7">⑦ </option>
+        <option value="8">⑧ </option>
+      </select>
+    </div>
+    <div>
+      <label>选颜色（点击颜色圆圈）：</label>
+      <div class="color-container" id="colorContainer">
+        <!-- 颜色圆圈将通过JS动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button class="prev-btn" id="prevBtn">上一页：选择皮革</button>
+    <button class="next-btn" id="nextBtn">下一步：定制印字/图案</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gloveCanvas');
+    const ctx = canvas.getContext('2d');
+    const currentPriceEl = document.getElementById('currentPrice');
+    const areaSelect = document.getElementById('areaSelect');
+    const colorContainer = document.getElementById('colorContainer');
+    const leatherTip = document.getElementById('leatherTip');
+    const canvasPlaceholder = document.querySelector('.canvas-placeholder');
+    const priceAlert = document.getElementById('priceAlert');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    let basePrice = parseInt(localStorage.getItem('basePrice')) || 1699;
+    let colorExtra = 0;
+    const areaColors = {
+      '1': null, '2': null, '3': null, '4': null,
+      '5': null, '6': null, '7': null, '8': null
+    };
+    let bgImg = null; // 存储底图对象
+    let originalWidth, originalHeight; // 原始图片尺寸
+
+    // 颜色列表
+    const colors = [
+      { code: '#FFFFFF', name: '纯白' },
+      { code: '#F5F0EB', name: '奶昔白' },
+      { code: '#9D5F3B', name: '金棕' },
+      { code: '#746148', name: '大象灰' },
+      { code: '#1E2E44', name: '午夜蓝' },
+      { code: '#000000', name: '黑色' },
+      { code: '#80412D', name: '焦糖棕' },
+      { code: '#3FBF72', name: '漫画绿' },
+      { code: '#B3A59A', name: '风衣灰' },
+      { code: '#F27D3C', name: '橙色' },
+      { code: '#F2C12E', name: '太阳黄' },
+      { code: '#F9E77F', name: '小鸡黄' },
+      { code: '#404234', name: '橄榄绿' },
+      { code: '#BDE0F2', name: '微风蓝' },
+      { code: '#A0E7E5', name: 'tiffany蓝' },
+      { code: '#0D32C4', name: '克莱因蓝' },
+      { code: '#91A3B1', name: '亚麻蓝' },
+      { code: '#C0A086', name: '马拉茶色' },
+      { code: '#828776', name: '鼠尾草绿' },
+      { code: '#808080', name: '积雨云灰' },
+      { code: '#BE3033', name: '大红' },
+      { code: '#EEB9C9', name: '樱花粉' },
+      { code: '#DF6981', name: '蔷薇粉' },
+      { code: '#E4A3BB', name: '花瓣粉' },
+      { code: '#6A2A30', name: '酒红' },
+      { code: '#FFD700', name: '柠檬黄' },
+      { code: '#C6AEA6', name: '杏色' },
+      { code: '#294162', name: '深邃蓝' },
+      { code: '#C0C0C0', name: '海鸥灰' },
+      { code: '#402D2D', name: '深咖' }
+    ];
+
+    // 生成颜色选择圆圈
+    function createColorCircles() {
+      colorContainer.innerHTML = '';
+      colors.forEach(color => {
+        const circle = document.createElement('div');
+        circle.className = 'color-circle';
+        circle.style.backgroundColor = color.code;
+        circle.title = color.name;
+        circle.dataset.color = color.code;
+        
+        circle.onclick = () => {
+          document.querySelectorAll('.color-circle').forEach(el => el.classList.remove('selected'));
+          circle.classList.add('selected');
+          const area = areaSelect.value;
+          const colorCode = color.code;
+          areaColors[area] = colorCode;
+          redrawAllColors();
+          calculatePrice();
+        };
+        
+        colorContainer.appendChild(circle);
+      });
+    }
+
+    // 与原始底图匹配的各区域路径坐标
+    const areaPaths = {
+      // ①号区域：左右拳套顶部绿色（精准匹配原图绿色区域）
+      '1': {
+        left: [
+          {x: 160, y: 90},          // 左上角起点
+          {x: 220, y: 60},          // 顶部圆弧控制点（二次贝塞尔）
+          {x: 280, y: 90},          // 右上角终点
+          {x: 290, y: 220},         // 右侧直线终点
+          {x: 140, y: 230},         // 左侧直线终点
+          {x: 160, y: 90}           // 闭合点
+        ],
+        right: [
+          {x: 340, y: 90},          // 左上角起点
+          {x: 400, y: 60},          // 顶部圆弧控制点（二次贝塞尔）
+          {x: 460, y: 90},          // 右上角终点
+          {x: 470, y: 220},         // 右侧直线终点
+          {x: 330, y: 230},         // 左侧直线终点
+          {x: 340, y: 90}           // 闭合点
+        ]
+      },
+
+      // ②号区域：左右拳套下部红色（精准匹配原图红色区域）
+      '2': {
+        left: [
+          {x: 160, y: 230},         // 上边缘左起点
+          {x: 150, y: 320},         // 左侧圆角控制点（二次贝塞尔）
+          {x: 170, y: 330},         // 左下角终点
+          {x: 260, y: 330},         // 右下角终点
+          {x: 280, y: 320},         // 右侧圆角控制点（二次贝塞尔）
+          {x: 270, y: 220},         // 上边缘右起点
+          {x: 160, y: 230}          // 闭合点
+        ],
+        right: [
+          {x: 360, y: 230},         // 上边缘左起点
+          {x: 370, y: 320},         // 左侧圆角控制点（二次贝塞尔）
+          {x: 390, y: 330},         // 左下角终点
+          {x: 480, y: 330},         // 右下角终点
+          {x: 500, y: 320},         // 右侧圆角控制点（二次贝塞尔）
+          {x: 490, y: 220},         // 上边缘右起点
+          {x: 360, y: 230}          // 闭合点
+        ]
+      },
+
+      // ③号区域：左右拳套主体蓝色（精准匹配原图蓝色区域）
+      '3': {
+        left: [
+          {x: 150, y: 130},         // 上起点
+          {x: 120, y: 180},         // 左侧弧线控制点1（三次贝塞尔）
+          {x: 110, y: 250},         // 左侧弧线控制点2（三次贝塞尔）
+          {x: 130, y: 290},         // 下起点
+          {x: 250, y: 280},         // 右侧直线终点
+          {x: 260, y: 180},         // 上部右侧弧线控制点
+          {x: 150, y: 130}          // 闭合点
+        ],
+        right: [
+          {x: 340, y: 130},         // 上起点
+          {x: 370, y: 180},         // 右侧弧线控制点1（三次贝塞尔）
+          {x: 380, y: 250},         // 右侧弧线控制点2（三次贝塞尔）
+          {x: 360, y: 290},         // 下起点
+          {x: 240, y: 280},         // 左侧直线终点
+          {x: 230, y: 180},         // 上部左侧弧线控制点
+          {x: 340, y: 130}          // 闭合点
+        ]
+      },
+
+      // ④号区域：左右上部侧边粉色（精准匹配原图粉色区域）
+      '4': {
+        left: [
+          {x: 290, y: 90},          // 上起点（衔接①号区域）
+          {x: 310, y: 110},         // 外侧圆弧控制点（二次贝塞尔）
+          {x: 305, y: 150},         // 外侧终点
+          {x: 285, y: 140},         // 内侧直线终点
+          {x: 290, y: 90}           // 闭合点
+        ],
+        right: [
+          {x: 470, y: 90},          // 上起点（衔接①号区域）
+          {x: 490, y: 110},         // 外侧圆弧控制点（二次贝塞尔）
+          {x: 485, y: 150},         // 外侧终点
+          {x: 465, y: 140},         // 内侧直线终点
+          {x: 470, y: 90}           // 闭合点
+        ]
+      },
+
+      // ⑤号区域：左右中部侧边灰色（精准匹配原图灰色区域）
+      '5': {
+        left: [
+          {x: 285, y: 150},         // 上起点（衔接④号区域）
+          {x: 305, y: 160},         // 外侧弧线控制点
+          {x: 300, y: 210},         // 外侧终点
+          {x: 275, y: 200},         // 内侧直线终点
+          {x: 285, y: 150}          // 闭合点
+        ],
+        right: [
+          {x: 465, y: 150},         // 上起点（衔接④号区域）
+          {x: 485, y: 160},         // 外侧弧线控制点
+          {x: 480, y: 210},         // 外侧终点
+          {x: 455, y: 200},         // 内侧直线终点
+          {x: 465, y: 150}          // 闭合点
+        ]
+      },
+
+      // ⑥号区域：左右中部内侧黑色（精准匹配原图黑色区域）
+      '6': {
+        left: [
+          {x: 275, y: 200},         // 上起点（衔接⑤号区域）
+          {x: 290, y: 195},         // 内侧弧线控制点（二次贝塞尔）
+          {x: 285, y: 240},         // 内侧终点
+          {x: 260, y: 250},         // 下直线终点
+          {x: 275, y: 200}          // 闭合点
+        ],
+        right: [
+          {x: 455, y: 200},         // 上起点（衔接⑤号区域）
+          {x: 440, y: 195},         // 内侧弧线控制点（二次贝塞尔）
+          {x: 445, y: 240},         // 内侧终点
+          {x: 470, y: 250},         // 下直线终点
+          {x: 455, y: 200}          // 闭合点
+        ]
+      },
+
+      // ⑦号区域：左右下部内侧紫色（精准匹配原图紫色区域）
+      '7': {
+        left: [
+          {x: 260, y: 250},         // 上起点（衔接⑥号区域）
+          {x: 270, y: 270},         // 外侧弧线控制点
+          {x: 265, y: 300},         // 外侧终点
+          {x: 230, y: 310},         // 内侧直线终点
+          {x: 260, y: 250}          // 闭合点
+        ],
+        right: [
+          {x: 470, y: 250},         // 上起点（衔接⑥号区域）
+          {x: 460, y: 270},         // 外侧弧线控制点
+          {x: 465, y: 300},         // 外侧终点
+          {x: 500, y: 310},         // 内侧直线终点
+          {x: 470, y: 250}          // 闭合点
+        ]
+      },
+
+      // ⑧号区域：左右系带及底部黄色（精准匹配原图黄色区域）
+      '8': {
+        left: [
+          {x: 180, y: 330},         // 左系带起点
+          {x: 200, y: 325},         // 系带弧线控制点（二次贝塞尔）
+          {x: 220, y: 330},         // 左系带终点
+          {x: 215, y: 340},         // 底部圆角控制点
+          {x: 185, y: 340},         // 底部左侧终点
+          {x: 180, y: 330}          // 闭合点
+        ],
+        right: [
+          {x: 380, y: 200},         // 上系带起点
+          {x: 400, y: 200},         // 上系带终点
+          {x: 405, y: 250},         // 中系带右侧点
+          {x: 400, y: 300},         // 下系带右侧点
+          {x: 405, y: 320},         // 底部圆角控制点（二次贝塞尔）
+          {x: 395, y: 330},         // 底部右侧终点
+          {x: 365, y: 330},         // 底部左侧终点
+          {x: 360, y: 320},         // 左侧圆角控制点
+          {x: 365, y: 300},         // 下系带左侧点
+          {x: 360, y: 250},         // 中系带左侧点
+          {x: 380, y: 200}          // 闭合点
+        ]
+      }
+    };
+
+    // 重新绘制所有区域颜色
+    function redrawAllColors() {
+      if (!bgImg) return;
+      
+      // 先绘制底图
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      
+      // 再绘制每个区域的颜色（左右两侧分别处理）
+      Object.keys(areaColors).forEach(area => {
+        const color = areaColors[area];
+        if (color) {
+          drawAreaColor(area, color);
+        }
+      });
+    }
+
+    // 绘制单个区域颜色（区分左右，处理弧线）
+    function drawAreaColor(area, color) {
+      const paths = areaPaths[area];
+      if (!paths) return;
+
+      // 绘制左侧区域（若存在）
+      if (paths.left) {
+        drawPathWithCurve(paths.left, color);
+      }
+
+      // 绘制右侧区域（若存在）
+      if (paths.right) {
+        drawPathWithCurve(paths.right, color);
+      }
+    }
+
+    // 处理含弧线的路径绘制（支持二次贝塞尔曲线）
+    function drawPathWithCurve(points, color) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+
+      for (let i = 1; i < points.length; i++) {
+        // 判断是否为圆弧段（控制点+终点成对出现）
+        if (i % 2 === 1 && i + 1 < points.length) {
+          // 二次贝塞尔曲线：控制点(points[i]) → 终点(points[i+1])
+          ctx.quadraticCurveTo(
+            points[i].x, points[i].y,
+            points[i + 1].x, points[i + 1].y
+          );
+          i++; // 跳过终点，避免重复绘制
+        } else {
+          // 直线段
+          ctx.lineTo(points[i].x, points[i].y);
+        }
+      }
+
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      // 添加半透明效果使原图轮廓可见
+      ctx.globalAlpha = 0.8;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // 价格计算及提示显示
+    function calculatePrice() {
+      const leatherType = localStorage.getItem('leatherType') || '';
+      const isWildCowhide = leatherType.includes('野牛皮');
+      const area123Colors = new Set();
+      const area45678Colors = new Set();
+
+      // 收集颜色
+      for (let i = 1; i <= 8; i++) {
+        const color = areaColors[i];
+        if (!color) continue;
+        
+        if (isWildCowhide && color === '#80412D') continue;
+        
+        if (i <= 3) {
+          area123Colors.add(color);
+        } else {
+          area45678Colors.add(color);
+        }
+      }
+
+      // 计算新增颜色
+      const newColorsIn45678 = new Set();
+      area45678Colors.forEach(color => {
+        if (!area123Colors.has(color)) newColorsIn45678.add(color);
+      });
+
+      // 计算额外费用
+      let extra = 0;
+      let alertText = '';
+      
+      // 1-3号区域超额提示
+      if (area123Colors.size > (isWildCowhide ? 3 : 2)) {
+        const overCount = area123Colors.size - (isWildCowhide ? 3 : 2);
+        extra += overCount * 300;
+        alertText += `①②③号区域已超额使用${overCount}种颜色，需额外支付${overCount * 300}元；`;
+      }
+      
+      // 4-8号区域超额提示
+      if (newColorsIn45678.size > (isWildCowhide ? 2 : 1)) {
+        const overCount = newColorsIn45678.size - (isWildCowhide ? 2 : 1);
+        extra += overCount * 150;
+        alertText += `④⑤⑥⑦⑧号区域已超额使用${overCount}种颜色，需额外支付${overCount * 150}元；`;
+      }
+
+      // 显示/隐藏提示
+      if (alertText) {
+        priceAlert.textContent = alertText;
+        priceAlert.style.display = 'block';
+      } else {
+        priceAlert.style.display = 'none';
+      }
+
+      // 更新价格
+      colorExtra = extra;
+      currentPriceEl.innerText = basePrice + colorExtra;
+      localStorage.setItem('colorExtra', colorExtra);
+      // 保存颜色选择
+      localStorage.setItem('areaColors', JSON.stringify(areaColors));
+    }
+
+    // 皮革提示
+    function showLeatherTip() {
+      const leatherType = localStorage.getItem('leatherType') || '';
+      if (leatherType.includes('野牛皮')) {
+        leatherTip.textContent = '野牛皮固定为深棕色，您可以用深棕色代替野牛皮来进行搭配，且不计入两种普通牛皮的颜色额度';
+        leatherTip.style.display = 'block';
+      } else if (leatherType.includes('鲨鱼皮') || leatherType.includes('鳄鱼') || leatherType.includes('鸵鸟') || leatherType.includes('蜥蜴')) {
+        leatherTip.textContent = '鳄鱼/鲨鱼/鸵鸟/蜥蜴等稀有皮革没有色卡，一般会有黑色、棕色、白色等常见颜色，您可以先用色卡上相似的颜色搭配，然后由我们来找找看有没有对应颜色的皮革（这种名贵稀有皮固定应用于 2、5 号区域，应用于其它区域需要联系客服报价）';
+        leatherTip.style.display = 'block';
+      } else {
+        leatherTip.style.display = 'none';
+      }
+    }
+
+    // 加载原始底图并设置canvas尺寸与图片一致
+    function loadBgImage() {
+      bgImg = new Image();
+      // 恢复为原始底图路径
+      bgImg.src = '../images/glove-bg.png.png';
+      
+      bgImg.onload = () => {
+        // 设置canvas尺寸与图片原始尺寸完全一致
+        canvas.width = bgImg.width;
+        canvas.height = bgImg.height;
+        originalWidth = bgImg.width;
+        originalHeight = bgImg.height;
+        
+        canvasPlaceholder.style.display = 'none';
+        ctx.drawImage(bgImg, 0, 0);
+        
+        // 恢复之前的颜色选择
+        const savedColors = localStorage.getItem('areaColors');
+        if (savedColors) {
+          Object.assign(areaColors, JSON.parse(savedColors));
+          redrawAllColors();
+        }
+        
+        showLeatherTip();
+        calculatePrice();
+      };
+      
+      bgImg.onerror = () => {
+        canvasPlaceholder.textContent = '拳套底图加载失败，请检查图片路径是否正确';
+      };
+    }
+
+    // 导航按钮事件
+    prevBtn.addEventListener('click', () => {
+      window.location.href = 'leather.html'; // 上一页：选择皮革页面
+    });
+
+    nextBtn.addEventListener('click', () => {
+      // 保存当前颜色选择
+      localStorage.setItem('areaColors', JSON.stringify(areaColors));
+      localStorage.setItem('colorExtra', colorExtra);
+      window.location.href = 'customize.html'; // 下一页：定制印字/图案页面
+    });
+
+    // 初始化
+    loadBgImage();
+    createColorCircles();
+  </script>
+</body>
+</html>

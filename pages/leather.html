@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2.选皮革类型</title>
+  <style>
+    body { font-family: 微软雅黑; padding: 20px; max-width: 750px; margin: 0 auto; }
+    .title { font-size: 20px; font-weight: bold; margin: 20px 0; }
+    .current-price {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 6px;
+    }
+    .leather-list { display: flex; flex-direction: column; gap: 12px; margin: 20px 0 30px; }
+    .leather-item { border: 1px solid #ddd; padding: 15px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .leather-item.active { border-color: #07c160; background: #f8f8f8; color: #07c160; }
+    .price-tag { color: #e4393c; font-weight: bold; margin-left: 10px; }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .prev-btn, .next-btn {
+      flex: 1;
+      padding: 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .prev-btn {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .next-btn {
+      background: #07c160;
+      color: #fff;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">选择皮革类型</div>
+  
+  <!-- 统一价格显示位置 -->
+  <div class="current-price">当前价格：¥<span id="currentPrice">1699</span></div>
+  
+  <div class="leather-list" id="leatherList">
+    <div class="leather-item active" data-type="Swift牛皮" data-price="1699">
+      Swift牛皮 <span class="price-tag">¥1699</span>
+    </div>
+    <div class="leather-item" data-type="Swift牛皮+野牛皮" data-price="1899">
+      Swift牛皮+野牛皮 <span class="price-tag">¥1899</span>
+    </div>
+    <div class="leather-item" data-type="Swift牛皮+鲨鱼皮" data-price="3599">
+      Swift牛皮+鲨鱼皮 <span class="price-tag">¥3599</span>
+    </div>
+    <div class="leather-item" data-type="Swift牛皮+鳄鱼/鸵鸟/蜥蜴皮" data-price="3999">
+      Swift牛皮+鳄鱼/鸵鸟/蜥蜴皮 <span class="price-tag">¥3999</span>
+    </div>
+  </div>
+  
+  <div class="btn-group">
+    <button class="prev-btn" id="prevBtn">上一页：选择尺寸</button>
+    <button class="next-btn" id="nextBtn">下一步：配色预览</button>
+  </div>
+
+  <script>
+    const leatherList = document.getElementById('leatherList');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const currentPriceEl = document.getElementById('currentPrice');
+    let selectedLeather = 'Swift牛皮'; // 默认选中第一个选项
+
+    // 初始化本地存储
+    localStorage.setItem('customLeather', selectedLeather);
+    localStorage.setItem('basePrice', '1699');
+    localStorage.setItem('leatherType', selectedLeather); // 用于配色页判断皮革类型
+
+    // 皮革选项点击事件
+    leatherList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('leather-item')) {
+        // 更新选中状态
+        document.querySelectorAll('.leather-item').forEach(item => item.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        // 更新选中值和价格
+        selectedLeather = e.target.dataset.type;
+        const price = e.target.dataset.price;
+        currentPriceEl.innerText = price;
+        
+        // 保存到本地存储
+        localStorage.setItem('customLeather', selectedLeather);
+        localStorage.setItem('basePrice', price);
+        localStorage.setItem('leatherType', selectedLeather);
+      }
+    });
+
+    // 上一页按钮
+    prevBtn.addEventListener('click', () => {
+      window.location.href = '../pages/size.html'; // 假设尺寸页路径为size.html
+    });
+
+    // 下一步按钮
+    nextBtn.addEventListener('click', () => {
+      window.location.href = '../pages/color.html';
+    });
+  </script>
+</body>
+</html>
